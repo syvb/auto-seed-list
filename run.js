@@ -55,7 +55,7 @@ async function main() {
   arr = arr.filter(line => !SEEDS.map(seed => line.startsWith(seed)).includes(true));
   arr = arr.filter(line => line.startsWith("wss://"));
   arr = arr.filter(line => !line.includes("sunnimiq")); // multiple nodes
-  console.error(arr);
+  //console.error(arr);
   const kp = Nimiq.KeyPair.fromHex(process.env.NIMIQ_KP);
   console.log(`# One seed address per line.
 # Lines starting with # and blank lines are ignored.
