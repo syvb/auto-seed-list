@@ -50,7 +50,16 @@ async function main() {
   arr = arr.filter(line => !SEEDS.map(seed => line.startsWith(seed)).includes(true));
   arr = arr.filter(line => line.startsWith("wss://"));
   arr = arr.filter(line => !line.includes("sunnimiq")); // multiple nodes
-  console.log(arr);
-  arr.forEach(seed => 
+  console.error(arr);
+  arr.forEach(seed => {
+    let client = new WebSocketClient();
+    client.on("connect", function(connection) {
+      console.log(seed);
+    });
+    client.on("connectError", function(connection) {
+      console.error("Connect error: " + seed);
+    });
+    client.connect(seed);
+  });
 }
 main();
