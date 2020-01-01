@@ -56,10 +56,9 @@ async function main() {
   arr = arr.filter(line => line.startsWith("wss://"));
   arr = arr.filter(line => !line.includes("sunnimiq")); // multiple nodes
   console.error(arr);
+  const kp = Nimiq.KeyPair.fromHex(process.env.NIMIQ_KP);
   console.log(`# One seed address per line.
 # Lines starting with # and blank lines are ignored.
-# The last line can be an optional signature (hex encoded).
-
 # Seed address formats:
 #    wss://<hostname>:<port>/<public_key>
 #    ws://<hostname|ip>:<port>/<public_key>
@@ -81,11 +80,16 @@ wss://pixel.auction:8443/0e73528f253f5e358fe36767032fe80ed9c3644f252d2f48e68e735
     });
     client.connect(seed);
   });
-  const privateK = Nimiq.PrivateKey.fromHex(process.env.NIMIQ_KP);
-  const publicK = Nimiq.PublicKey.derive(privateK);
-  console.log(Nimiq.Signature._signatureCreate(privateK._obj, publicK._obj, "test"));
+  //console.log(Buffer.from(Nimiq.Signature._signatureCreate(kp.privateKey._obj, kp.publicKey._obj, "test")).toString("hex"));
   setTimeout(() => {
-    
+    const whatToSign = addedSeeds.join("\n");
+    console.log(`
+# The last line is the hex-encoded signature.
+# It is the result of signing all seeds listed above, joined by newlines.
+# It was signed using Nimiq.Signature._signatureCreate
+# My public key is ${kp.publicKey.toHex()}.`);
+    console.log(Buffer.from(Nimiq.Signature._signatureCreate(kp.privateKey._obj, kp.publicKey._obj, whatToSign)).toString("hex"));
+    process.exit(0);
   }, 5000);
 }
 main();
