@@ -3,13 +3,13 @@ const WebSocketClient = require("websocket").client;
 const Nimiq = require("@nimiq/core");
 
 const SEEDS = [
-  "wss://seed.nimiqpool.com:22001/e31f6928121400d6f5f2b2a02e3b99c95bdaef71afe910ddf8deee45eed066a0",
-  "wss://seed.nimiq.by:8443/c4df959f0f44f971fae2c487b65d6c8eee4aae691e7fd21ffe4e746e6774f92e",
-  "wss://urp.best:8443/230ff3860e5f75113758f7b6aa3774863ff116c3435efd2c69e8d7b45192296d",
-  "wss://nimiq.icemining.ca:8443/c035eda9dfea2a1c7a30b06f4dcb8b774302d4e25d0dc4dcc45985fc8a2d7432",
-  "wss://nimiq.mopsus.com:",
-  "wss://hk1.seed.nimpool.io:443/0e9b0b3b470f02d2928e2d676a6beea0cf959a462101182eebb4f5d5d7c744c7",
-  "wss://node.nimiq.watch:8080/5a295d17ac7fd0d70b0d6c607321da8c3518e09bfca51648399f555af4f96c55",
+  "wss://seed.nimiqpool.com:22001",
+  "wss://seed.nimiq.by:8443",
+  "wss://urp.best:8443",
+  "wss://nimiq.icemining.ca:8443",
+  "wss://nimiq.mopsus.com",
+  "wss://hk1.seed.nimpool.io:443",
+  "wss://node.nimiq.watch:8080",
   "wss://seed-1.nimiq.com",
   "wss://seed-2.nimiq.com",
   "wss://seed-3.nimiq.com",
@@ -51,13 +51,17 @@ function serialSeeds(seeds) {
 }
 
 async function main() {
-  let arr = (await rpcCall("peerList")).map(a => a.address);
+  let arr = await rpcCall("peerList");
+  arr = arr.map(a => a.address);
   arr = arr.filter(line => !SEEDS.map(seed => line.startsWith(seed)).includes(true));
-  arr = arr.filter(line => line.startsWith("wss://"));
-  arr = arr.filter(line => !line.includes("sunnimiq")); // multiple nodes
-  //console.error(arr);
+  arr = arr.filter(line => line.startsWith("ws"));
+  //arr = arr.filter(line => !line.includes("sunnimiq")); // multiple nodes
+  arr = arr.map(line => line.split("/").slice(0, 3).join("/") + "/");
+  arr = [...new Set(arr)];
+  console.error(arr);
   const kp = Nimiq.KeyPair.fromHex(process.env.NIMIQ_KP);
-  console.log(`# One seed address per line.
+  console.log(`# Generated ${(new Date).toUTCString()}
+# One seed address per line.
 # Lines starting with # and blank lines are ignored.
 # Seed address formats:
 #    wss://<hostname>:<port>/<public_key>
@@ -74,6 +78,11 @@ ${process.env.NODE_ADDR}
     client.on("connect", function(connection) {
       console.log(seed);
       addedSeeds.push(seed);
+      connection.on("message", function(message) {
+        //if (message.type === "utf8") {
+          console.error(seed + "Received: '" + message + "'");
+        //}
+      });
     });
     client.on("connectError", function(connection) {
       console.error("Connect error: " + seed);
@@ -91,6 +100,6 @@ ${process.env.NODE_ADDR}
 # My public key is ${kp.publicKey.toHex()}.`);
     console.log(Buffer.from(Nimiq.Signature._signatureCreate(kp.privateKey._obj, kp.publicKey._obj, whatToSign)).toString("hex"));
     process.exit(0);
-  }, 5000);
+  }, 10000);
 }
 main();
